@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  webapp:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+      - "5432:5432"
+    volumes:
+      # PostgreSQLデータの永続化
+      - postgres_data:/var/lib/postgresql/13/main
+      # ログファイルの永続化
+      - ./logs:/var/log
+    environment:
+      # 環境変数は.envファイルから読み込み
+      - DATABASE_URL=${DATABASE_URL}
+      - SERVER_PORT=${SERVER_PORT}
+      - JSONPLACEHOLDER_URL=${JSONPLACEHOLDER_URL}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    env_file:
+      - ../.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webapp -d webapp || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
